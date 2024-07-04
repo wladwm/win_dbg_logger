@@ -83,16 +83,13 @@ impl DebuggerLogger {
 
 impl log::Log for DebuggerLogger {
     fn enabled(&self, _metadata: &Metadata) -> bool {
-        true
+        self.force_log_without_debugger
+            .load(std::sync::atomic::Ordering::Relaxed)
+            || is_debugger_present()
     }
 
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata())
-            && (self
-                .force_log_without_debugger
-                .load(std::sync::atomic::Ordering::Relaxed)
-                || is_debugger_present())
-        {
+        if self.enabled(record.metadata()) {
             let s = format!(
                 "{}({}): {} - {}\r\n",
                 record.file().unwrap_or("<unknown>"),
